@@ -44,10 +44,10 @@ go build -o arazzo-mcp-gen
 
 ## Usage
 
-The CLI provides a single primary command: `generate`.
+The CLI provides the primary command: `mcp-server generate`.
 
 ```bash
-arazzo-mcp-gen generate --folder <path-to-folder> [flags]
+arazzo-mcp-gen mcp-server generate --folder <path-to-folder> [flags]
 ```
 
 ### Available Flags:
@@ -79,7 +79,7 @@ my-arazzo-folder/
 Run the CLI, pointing it to your folder:
 
 ```bash
-./arazzo-mcp-gen generate -d ./my-arazzo-folder -p 8080 --output-dir ./mcp-artifacts
+./arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 --output-dir ./mcp-artifacts
 ```
 
 **Expected Output:**

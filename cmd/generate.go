@@ -10,13 +10,13 @@ import (
 )
 
 const GenerateCmdExample = `# Generate an MCP server Docker image from an Arazzo spec folder
-arazzo-mcp-gen generate -d ./my-arazzo-folder
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder
 
 # Generate with a custom port
-arazzo-mcp-gen generate -d ./my-arazzo-folder -p 8080
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080
 
 # Generate and save build artifacts to a directory for inspection or manual editing
-arazzo-mcp-gen generate -d ./my-arazzo-folder --output-dir ./my-output`
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder --output-dir ./my-output`
 
 var (
 	generateFolder    string
@@ -65,7 +65,7 @@ func init() {
 
 	generateCmd.MarkFlagRequired("folder")
 
-	rootCmd.AddCommand(generateCmd)
+	mcpServerCmd.AddCommand(generateCmd)
 }
 
 func runGenerateCommand() error {

@@ -5,8 +5,8 @@ before:
     - go mod tidy
 
 builds:
-  - id: arazzo-mcp
-    binary: arazzo-mcp
+  - id: arazzo-mcp-gen
+    binary: arazzo-mcp-gen
     main: .
     env:
       - CGO_ENABLED=0
@@ -51,6 +51,6 @@ brews:
     homepage: https://github.com/HimethW/arazzo-mcp-gen
     description: "A CLI tool to generate MCP servers from Arazzo specifications."
     install: |
-      bin.install "arazzo-mcp"
+      bin.install "arazzo-mcp-gen"
     test: |
-      system "#{bin}/arazzo-mcp", "--version"
+      system "#{bin}/arazzo-mcp-gen", "--version"

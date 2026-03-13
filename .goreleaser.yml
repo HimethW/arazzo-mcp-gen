@@ -42,3 +42,15 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+brews:
+  - repository:
+      owner: HimethW
+      name: homebrew-tap
+    directory: Formula
+    homepage: https://github.com/HimethW/arazzo-mcp-gen
+    description: "A CLI tool to generate MCP servers from Arazzo specifications."
+    install: |
+      bin.install "arazzo-mcp"
+    test: |
+      system "#{bin}/arazzo-mcp", "--version"

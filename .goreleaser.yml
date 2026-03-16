@@ -5,11 +5,11 @@ before:
     - go mod tidy
 
 builds:
-  - id: arazzo-mcp-gen
-    binary: arazzo-mcp-gen
-    main: .
+  - id: arazzo-mcp-gen #unique name for the tool
+    binary: arazzo-mcp-gen #the name of the binary to be generated on the hard drive
+    main: . #look in the root dir to get the main.go to start the compilation
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=0 #env variables to be set
     goos:
       - darwin
       - linux
@@ -43,7 +43,7 @@ changelog:
       - "^docs:"
       - "^test:"
 
-brews:
+brews: #creating the brew formula
   - repository:
       owner: HimethW
       name: homebrew-tap
@@ -54,3 +54,10 @@ brews:
       bin.install "arazzo-mcp-gen"
     test: |
       system "#{bin}/arazzo-mcp-gen", "--version"
+
+scoops:
+  - repository:
+      owner: HimethW
+      name: scoop-bucket
+    homepage: https://github.com/HimethW/arazzo-mcp-gen
+    description: "A CLI tool to generate MCP servers from Arazzo specifications."

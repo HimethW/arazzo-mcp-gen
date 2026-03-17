@@ -78,6 +78,41 @@ func GenerateServerCode(spec *ArazzoSpec, arazzoFileName string, port int) (stri
 		b.WriteString("\n")
 	}
 
+	// ── Monkey-patch: fix arazzo-runner GOTO off-by-one bug ──
+	// The library's execute_next_step always advances current_step_id by +1.
+	// After a GOTO sets current_step_id to the target, the next call skips
+	// past it.  This patch adjusts current_step_id after a GOTO so the +1
+	// correctly lands on the intended target step.
+	b.WriteString("# ── Fix arazzo-runner GOTO off-by-one bug ──\n")
+	b.WriteString("_original_execute_next_step = ArazzoRunner.execute_next_step\n")
+	b.WriteString("\n")
+	b.WriteString("def _fixed_execute_next_step(self, execution_id):\n")
+	b.WriteString("    result = _original_execute_next_step(self, execution_id)\n")
+	b.WriteString("    status = result.get(\"status\")\n")
+	b.WriteString("    if hasattr(status, \"value\"):\n")
+	b.WriteString("        status = status.value\n")
+	b.WriteString("    if status == \"goto_step\":\n")
+	b.WriteString("        target_step_id = result.get(\"step_id\")\n")
+	b.WriteString("        state = self.execution_states[execution_id]\n")
+	b.WriteString("        workflow = None\n")
+	b.WriteString("        for wf in (self.arazzo_doc or {}).get(\"workflows\", []):\n")
+	b.WriteString("            if wf.get(\"workflowId\") == state.workflow_id:\n")
+	b.WriteString("                workflow = wf\n")
+	b.WriteString("                break\n")
+	b.WriteString("        if workflow:\n")
+	b.WriteString("            steps = workflow.get(\"steps\", [])\n")
+	b.WriteString("            for idx, step in enumerate(steps):\n")
+	b.WriteString("                if step.get(\"stepId\") == target_step_id:\n")
+	b.WriteString("                    if idx == 0:\n")
+	b.WriteString("                        state.current_step_id = None\n")
+	b.WriteString("                    else:\n")
+	b.WriteString("                        state.current_step_id = steps[idx - 1].get(\"stepId\")\n")
+	b.WriteString("                    break\n")
+	b.WriteString("    return result\n")
+	b.WriteString("\n")
+	b.WriteString("ArazzoRunner.execute_next_step = _fixed_execute_next_step\n")
+	b.WriteString("\n")
+
 	// ── Generate a tool for each workflow ──
 	for i, wf := range spec.Workflows {
 		if i > 0 {

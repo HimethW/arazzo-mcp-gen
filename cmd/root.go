@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/wso2/arazzo-mcp-gen/internal/metadata"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "arazzo-mcp-gen",
-	Short: "Generate MCP servers from Arazzo specifications",
-	Long:  `arazzo-mcp-gen is a standalone CLI tool for generating Dockerized Python MCP servers directly from an Arazzo specification and its referenced OpenAPI spec files.`,
+	Use:     "arazzo-mcp-gen",
+	Version: metadata.Version,
+	Short:   "Generate MCP servers from Arazzo specifications",
+	Long:    `arazzo-mcp-gen is a standalone CLI tool for generating Dockerized Python MCP servers directly from an Arazzo specification and its referenced OpenAPI spec files.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

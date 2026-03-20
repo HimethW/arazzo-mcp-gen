@@ -51,7 +51,7 @@ Given a folder containing:
 
 ## Installation
 
-Download the latest version for your operating system from the [Releases](https://github.com/wso2/arazzo-mcp-gen/releases) page.
+Download the latest version for your operating system from the [Releases](https://github.com/HimethW/arazzo-mcp-gen/releases) page.
 
 ### Windows
 1. Download `arazzo-mcp-gen-windows-amd64.exe`.
@@ -164,7 +164,7 @@ arazzo-mcp-gen validate -f ./workflow.yaml
 # Validate and also check that remote OpenAPI URLs are reachable
 arazzo-mcp-gen validate -d ./my-arazzo-folder --check-remote
 
-# Strict mode: fail CI if there are any warnings
+# Strict mode: fail if there are any warnings
 arazzo-mcp-gen validate -d ./my-arazzo-folder --strict
 ```
 
@@ -399,11 +399,11 @@ Generating MCP server code...
 Building Docker image...
 [+] Building 12.3s (10/10) FINISHED
 ╔════════════════════════════════════════════════════════════════════════╗
-║ ✅ MCP Server image built successfully!                                 ║
+║ ✅ MCP Server image built successfully!                                ║
 ║                                                                        ║
 ║ Image:  pet-upsert-workflow-v3-mcp-server                              ║
 ║ Run:    docker run -p 5000:5000 pet-upsert-workflow-v3-mcp-server      ║
-║ URL:    http://localhost:5000                                           ║
+║ URL:    http://localhost:5000                                          ║
 ║                                                                        ║
 ║ Build artifacts saved to: ./artifacts                                  ║
 ╚════════════════════════════════════════════════════════════════════════╝

@@ -53,17 +53,26 @@ var validateCmd = &cobra.Command{
 	Short: "Validate an Arazzo specification file",
 	Long: `Validate an Arazzo specification file for correctness and completeness.
 
-Performs comprehensive checks including:
-  - YAML syntax validation
-  - Arazzo version compatibility (1.0.x)
-  - Required fields (info.title, info.version, sourceDescriptions, workflows)
-  - Source description completeness and accessibility
-  - Workflow structure (workflowId uniqueness, inputs, outputs)
-  - Step structure (stepId uniqueness, operationId/workflowId, parameters)
-  - Success criteria expression syntax
-  - onSuccess/onFailure action validation (goto targets, end, retry)
-  - Runtime expression validation ($statusCode, $inputs, $steps, etc.)
-  - Cross-reference checks (goto targets, output references)
+Uses Spectral (https://github.com/stoplightio/spectral) with the official
+'spectral:arazzo' ruleset as the primary validation engine when available.
+Falls back to the built-in validator when Spectral/Node.js is not installed.
+
+Spectral performs comprehensive checks including:
+  - Full JSON Schema validation against the Arazzo 1.0.x specification
+  - workflowId and stepId uniqueness and naming pattern validation
+  - Step validation (operationId/operationPath/workflowId correctness)
+  - Parameter, requestBody, and success criteria validation
+  - Success/failure action validation (unique names, mutual exclusivity)
+  - Workflow and step output expression validation
+  - dependsOn validation and cross-reference checks
+  - XSS prevention in markdown descriptions
+
+Additional custom checks (always applied):
+  - Source file and URL accessibility verification (with --check-remote)
+  - AND-ed $statusCode criteria warnings
+
+To install Spectral Globally: npm install -g @stoplight/spectral-cli
+(without Spectral, a built-in validator is used as fallback)
 
 Use --check-remote to also verify that remote source URLs are accessible.
 Use --strict to treat warnings as errors (non-zero exit code on warnings).`,
@@ -141,8 +150,29 @@ func runValidateCommand() error {
 		folderPath = absFolder
 	}
 
-	// Run validation
-	result := validator.ValidateFile(filePath, folderPath, validateCheckRemote)
+	// Run validation — try Spectral first, fall back to built-in
+	var result *validator.Result
+
+	if spectralResult, ok, reason := validator.ValidateWithSpectral(filePath, folderPath, validateCheckRemote); ok {
+		result = spectralResult
+	} else if reason == "failed" {
+		// Spectral is installed but encountered an error linting this file
+		fmt.Printf("\n%s⚠  Spectral encountered an error — using built-in validator.%s\n", "\033[33m", "\033[0m")
+		fmt.Printf("%s   Spectral was found but failed to lint this file.%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s   You can run Spectral manually to see the full error:%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s     npx @stoplight/spectral-cli lint \"%s\" --ruleset spectral:arazzo%s\n\n", "\033[2m", filePath, "\033[0m")
+		result = validator.ValidateFile(filePath, folderPath, validateCheckRemote)
+	} else {
+		// Spectral / Node.js not found — use the built-in Go validator.
+		fmt.Printf("\n%s⚠  Spectral not found — using built-in validator.%s\n", "\033[33m", "\033[0m")
+		fmt.Printf("%s   For comprehensive validation (full JSON Schema + semantic checks),%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s   install Spectral and re-run:%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s     • Global install:  npm install -g @stoplight/spectral-cli%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s     • Via npx (Node.js required, no global install):%s\n", "\033[2m", "\033[0m")
+		fmt.Printf("%s         npx @stoplight/spectral-cli lint <your-arazzo.yaml> --ruleset spectral:arazzo%s\n\n", "\033[2m", "\033[0m")
+		result = validator.ValidateFile(filePath, folderPath, validateCheckRemote)
+	}
+
 	result.PrintReport()
 
 	// Determine exit code

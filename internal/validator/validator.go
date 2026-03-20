@@ -56,6 +56,9 @@ type Issue struct {
 type Result struct {
 	FilePath string
 	Issues   []Issue
+	// Engine identifies which validator produced this result.
+	// "spectral" = Spectral CLI, "builtin" = built-in Go validator.
+	Engine string
 }
 
 func (r *Result) add(sev Severity, cat, path, msg string) {
@@ -133,8 +136,13 @@ func (r *Result) PrintReport() {
 	fmt.Printf("\n%s%sValidating: %s%s\n", colorBold, colorCyan, r.FilePath, colorReset)
 	fmt.Println(strings.Repeat("─", 60))
 
+	// Print all issues grouped by category (skip SevPass lines for Spectral —
+	// they are "all clear" sentinel entries, not per-rule pass lines).
 	lastCategory := ""
 	for _, iss := range r.Issues {
+		if r.Engine == "spectral" && iss.Severity == SevPass {
+			continue // handled in the summary block below
+		}
 		if iss.Category != lastCategory {
 			header := categoryHeader(iss.Category)
 			fmt.Printf("\n%s%s%s\n", colorBold, header, colorReset)
@@ -147,21 +155,37 @@ func (r *Result) PrintReport() {
 		fmt.Printf("%s %s%s\n", sevIcon(iss.Severity), iss.Message, pathStr)
 	}
 
-	// Summary
+	// ── Summary block ──
 	fmt.Println()
 	fmt.Println(strings.Repeat("━", 60))
 	errors := r.ErrorCount()
 	warnings := r.WarningCount()
-	passes := r.PassCount()
 
 	if errors == 0 {
 		fmt.Printf("%s%sValidation Result: PASSED%s\n", colorBold, colorGreen, colorReset)
 	} else {
 		fmt.Printf("%s%sValidation Result: FAILED%s\n", colorBold, colorRed, colorReset)
 	}
-	fmt.Printf("  %s✓ %d checks passed%s\n", colorGreen, passes, colorReset)
-	fmt.Printf("  %s⚠ %d warnings%s\n", colorYellow, warnings, colorReset)
-	fmt.Printf("  %s✗ %d errors%s\n", colorRed, errors, colorReset)
+
+	if r.Engine == "spectral" {
+		// Show a meaningful Spectral-specific summary line instead of a raw pass count.
+		if errors == 0 && warnings == 0 {
+			fmt.Printf("  %s✓ All arazzo rules passed%s\n", colorGreen, colorReset)
+		} else {
+			total := errors + warnings
+			fmt.Printf("  %sℹ Spectral found %d issue(s) — see details above%s\n", colorCyan, total, colorReset)
+		}
+		fmt.Printf("  %s⚠ %d warnings%s\n", colorYellow, warnings, colorReset)
+		fmt.Printf("  %s✗ %d errors%s\n", colorRed, errors, colorReset)
+		fmt.Printf("  %s─ Validated using Spectral (spectral:arazzo ruleset)%s\n", colorDim, colorReset)
+	} else {
+		// Built-in validator: show per-rule pass count.
+		passes := r.PassCount()
+		fmt.Printf("  %s✓ %d checks passed%s\n", colorGreen, passes, colorReset)
+		fmt.Printf("  %s⚠ %d warnings%s\n", colorYellow, warnings, colorReset)
+		fmt.Printf("  %s✗ %d errors%s\n", colorRed, errors, colorReset)
+		fmt.Printf("  %s─ Using built-in validator (Spectral not available)%s\n", colorDim, colorReset)
+	}
 	fmt.Println()
 }
 
@@ -214,7 +238,7 @@ func toMapSlice(arr []interface{}) []map[string]interface{} {
 // folderPath is the directory containing the file (for resolving relative source paths).
 // If checkRemote is true, HTTP(S) source URLs are probed for accessibility.
 func ValidateFile(filePath string, folderPath string, checkRemote bool) *Result {
-	r := &Result{FilePath: filePath}
+	r := &Result{FilePath: filePath, Engine: "builtin"}
 
 	// ── 1. Read file ────────────────────────────────────────────────────────
 	data, err := os.ReadFile(filePath)
@@ -925,4 +949,25 @@ var outputExprPattern = regexp.MustCompile(`^\$[a-zA-Z][a-zA-Z0-9_.#/]*$`)
 
 func isValidOutputExpression(expr string) bool {
 	return outputExprPattern.MatchString(strings.TrimSpace(expr))
+}
+
+// ─── Shared helpers ────────────────────────────────────────────────────────────
+
+// readAndParseYAML reads and parses a YAML file into a map.
+func readAndParseYAML(filePath string) (map[string]interface{}, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// fileExists checks if a file exists at the given path.
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }

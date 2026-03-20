@@ -1,131 +1,469 @@
 # arazzo-mcp-gen
 
-`arazzo-mcp-gen` is a standalone CLI tool that generates Dockerized Python Model Context Protocol (MCP) servers directly from an Arazzo specification and its referenced OpenAPI spec files. It automates the boilerplate of exposing complex API workflows as tool functions that AI agents can use.
+`arazzo-mcp-gen` is a CLI tool that turns an [Arazzo specification](https://spec.openapis.org/arazzo/latest.html) and its referenced OpenAPI files into a fully Dockerized Python MCP (Model Context Protocol) server. Each Arazzo workflow becomes an MCP tool that any AI agent can call.
 
-## Features
+---
 
-- **Automated Code Generation:** Reads your Arazzo `.yaml` file and generates a complete `mcp_server.py` using `fastmcp`.
-- **Workflow to Tool Mapping:** Each Arazzo workflow gets mapped to a distinct `@mcp.tool()`.
-- **Credential Detection:** Automatically detects credential inputs (API keys, Tokens, etc.) and exposes them as parameters to the agent.
-- **Docker Integration:** Automatically generates a `Dockerfile` and builds a ready-to-run container image.
-- **Stateless MCP via HTTP:** The generated server runs in stateless HTTP mode (`0.0.0.0`), ideal for containerized or distributed deployments.
+## Table of Contents
+
+1. [What It Does](#what-it-does)
+2. [Prerequisites](#prerequisites)
+3. [Installation](#installation)
+4. [Quick Start](#quick-start)
+5. [Commands](#commands)
+   - [init](#init)
+   - [validate](#validate)
+   - [inspect](#inspect)
+   - [visualize](#visualize)
+   - [mcp-server generate](#mcp-server-generate)
+6. [User Scenario: End-to-End Walkthrough](#user-scenario-end-to-end-walkthrough)
+7. [Generated Artifacts](#generated-artifacts)
+8. [License](#license)
+
+---
+
+## What It Does
+
+Given a folder containing:
+- one Arazzo `.yaml` file (describes multi-step API workflows)
+- referenced OpenAPI `.yaml` files (describe individual API operations)
+
+…the CLI will:
+
+| Step | What happens |
+|------|-------------|
+| Validate | Checks the Arazzo file for correctness (requires Spectral or uses built-in checks) |
+| Inspect | Shows a human-readable summary of workflows and steps |
+| Visualize | Renders a Mermaid flowchart of the workflow logic |
+| Generate | Emits `mcp_server.py` + `Dockerfile`, then builds a Docker image |
+| Run | `docker run` the image — any MCP client can connect |
 
 ---
 
 ## Prerequisites
 
-Before using `arazzo-mcp-gen`, ensure you have the following installed on your machine:
-
-1. **[Docker](https://docs.docker.com/get-docker/):** Required to build and run the generated MCP server images. Docker must be running when you execute the CLI.
-2. **[Go 1.21+](https://go.dev/doc/install):** Required if you are building the CLI from the source.
-3. An **Arazzo Specification File** (a `.yaml` or `.yml` file containing an `arazzo` top-level key) and its corresponding **OpenAPI Specification Files**. Both must reside in the same folder.
+| Tool | Why | Install |
+|------|-----|---------|
+| **Docker** | Build and run the generated image | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) |
+| **Node.js + npx** *(optional)* | Enables the Spectral validator for in-depth Arazzo checks | [nodejs.org](https://nodejs.org) |
 
 ---
 
 ## Installation
 
-To build the project from source:
+Download the latest version for your operating system from the [Releases](https://github.com/wso2/arazzo-mcp-gen/releases) page.
+
+### Windows
+1. Download `arazzo-mcp-gen-windows-amd64.exe`.
+2. Rename it to `arazzo-mcp-gen.exe`.
+3. Move it to a folder in your PATH (e.g., `C:\Windows\system32`) or run it directly from your downloads.
+
+### macOS / Linux
+1. Download the binary for your architecture (`darwin` for Mac, `linux` for Linux).
+2. Make it executable:
+   ```bash
+   chmod +x arazzo-mcp-gen-linux-amd64
+   sudo mv arazzo-mcp-gen-linux-amd64 /usr/local/bin/arazzo-mcp-gen
+   ```
+
+Verify the installation:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/wso2/arazzo-mcp-gen.git
-cd arazzo-mcp-gen
-
-# 2. Download dependencies
-go mod tidy
-
-# 3. Build the CLI binary
-go build -o arazzo-mcp-gen
+arazzo-mcp-gen --version
 ```
-
-*(On Windows, the binary will be built as `arazzo-mcp-gen.exe`)*
 
 ---
 
-## Usage
+## Quick Start
 
-The CLI provides the primary command: `mcp-server generate`.
+If you don't have an Arazzo spec yet, let the CLI create a sample one:
 
 ```bash
-arazzo-mcp-gen mcp-server generate --folder <path-to-folder> [flags]
+arazzo-mcp-gen init my-project
+cd my-project
 ```
 
-### Available Flags:
+Then validate, inspect, and generate in three commands:
+
+```bash
+arazzo-mcp-gen validate -d .
+arazzo-mcp-gen inspect  -d .
+arazzo-mcp-gen mcp-server generate -d . -p 5000
+```
+
+Once Docker finishes building, run it:
+
+```bash
+docker run -p 5000:5000 <image-name-from-output>
+```
+
+---
+
+## Commands
+
+### `init`
+
+Creates a new directory with a ready-to-use sample Arazzo spec targeting the Petstore v3 API. Good starting point for writing your own spec.
+
+```bash
+arazzo-mcp-gen init [project-name]
+```
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `project-name` | Name of the folder to create | `sample-arazzo-project` |
+
+**Examples**
+
+```bash
+# Create a folder called 'sample-arazzo-project'
+arazzo-mcp-gen init
+
+# Create a folder called 'my-api-project'
+arazzo-mcp-gen init my-api-project
+```
+
+What it creates:
+
+```
+my-api-project/
+└── petstore_workflow.yaml   ← sample Arazzo spec targeting Petstore v3
+```
+
+---
+
+### `validate`
+
+Validates an Arazzo specification for correctness and completeness.
+
+Uses **Spectral** (via `npx @stoplight/spectral-cli`) with the official `spectral:arazzo` ruleset as the primary validator when available. Falls back to the built-in Go validator when Node.js is not installed, showing install instructions.
+
+```bash
+arazzo-mcp-gen validate -d <folder>
+arazzo-mcp-gen validate -f <file>
+```
 
 | Flag | Short | Description | Default |
-|-------------|-------|------------------------------------------------------|---------|
-| `--folder` | `-d` | **(Required)** Path to the folder containing your Arazzo and OpenAPI files. | |
-| `--port` | `-p` | The port the generated MCP server will listen on. | `5000` |
-| `--output-dir`| | Directory to save the generated build artifacts (`Dockerfile`, `mcp_server.py`, etc.) for inspection. If omitted, a temporary directory is used. | |
+|------|-------|-------------|---------|
+| `--folder` | `-d` | Folder containing the Arazzo file (auto-detected) | — |
+| `--file` | `-f` | Path to a single Arazzo `.yaml` file | — |
+| `--check-remote` | | Also probe remote source URLs for accessibility | `false` |
+| `--strict` | | Treat warnings as errors (exits with code 1 on warnings) | `false` |
+
+> Use either `--folder` or `--file`, not both.
+
+**Examples**
+
+```bash
+# Validate all files in a folder
+arazzo-mcp-gen validate -d ./my-arazzo-folder
+
+# Validate a single file
+arazzo-mcp-gen validate -f ./workflow.yaml
+
+# Validate and also check that remote OpenAPI URLs are reachable
+arazzo-mcp-gen validate -d ./my-arazzo-folder --check-remote
+
+# Strict mode: fail CI if there are any warnings
+arazzo-mcp-gen validate -d ./my-arazzo-folder --strict
+```
+
+**What it checks (Spectral ruleset)**
+- Full JSON Schema validation against the Arazzo 1.0.x spec
+- Unique `workflowId` and `stepId` values
+- Step targets (`operationId`, `operationPath`, `workflowId`) are present and valid
+- Parameter `name`, `in`, and `value` fields
+- Success criteria condition syntax
+- Unique `onSuccess` / `onFailure` action names
+- Output expression syntax
+- `dependsOn` cross-references
+
+**Additional built-in checks (always run)**
+- Local source file existence
+- Remote URL accessibility (only with `--check-remote`)
+- Multiple `$statusCode` criteria that are AND-ed together (a common mistake)
+
+**Exit codes**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Passed (no errors) |
+| `1` | Errors found, or warnings in `--strict` mode |
 
 ---
 
-## Step-by-Step Example
+### `inspect`
 
-Let's walk through an example using an Arazzo spec for "Independent Pet Workflows".
-
-### 1. Prepare your input folder
-
-Create a directory containing your Arazzo specification and the referenced OpenAPI specification.
-
-```text
-my-arazzo-folder/
-├── multi_workflow_indep.yaml   # Your Arazzo Specification
-└── openapi_v2.yaml             # Your OpenAPI specification
-```
-
-### 2. Run the Generator
-
-Run the CLI, pointing it to your folder:
+Parses and prints a detailed, colour-coded overview of an Arazzo spec — without generating anything. Use this to understand a spec or debug step-flow routing before generating an MCP server.
 
 ```bash
-./arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 --output-dir ./mcp-artifacts
+arazzo-mcp-gen inspect -d <folder>
+arazzo-mcp-gen inspect -f <file>
 ```
 
-**Expected Output:**
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--folder` | `-d` | Folder containing the Arazzo file |
+| `--file` | `-f` | Path to a single Arazzo `.yaml` file |
 
-```text
+**Examples**
+
+```bash
+# Inspect a folder (auto-detects the Arazzo file)
+arazzo-mcp-gen inspect -d ./my-arazzo-folder
+
+# Inspect a specific file
+arazzo-mcp-gen inspect -f ./workflow.yaml
+```
+
+**Output includes**
+- Spec metadata: title, version, Arazzo version
+- All source descriptions with types and URLs
+- For each workflow:
+  - Input schema with types
+  - Each step: operation target, parameter bindings, success criteria
+  - `onSuccess` / `onFailure` routing with conditions (GOTO, END, RETRY)
+  - Step outputs and their expressions
+  - Workflow-level outputs
+
+---
+
+### `visualize`
+
+Generates a Mermaid flowchart diagram of the Arazzo spec's workflow logic. By default opens the rendered diagram in your browser (no extra tools needed). Can also save to a file.
+
+```bash
+arazzo-mcp-gen visualize -d <folder>
+arazzo-mcp-gen visualize -f <file> [-o <output-file>]
+```
+
+Alias: `viz`
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--folder` | `-d` | Folder containing the Arazzo file |
+| `--file` | `-f` | Path to a single Arazzo `.yaml` file |
+| `--output` | `-o` | Output file path. `.md` → Mermaid in fenced code block; `.mmd` → raw Mermaid syntax |
+
+**Examples**
+
+```bash
+# Open diagram in browser (default)
+arazzo-mcp-gen visualize -d ./my-arazzo-folder
+
+# Save to GitHub-renderable Markdown
+arazzo-mcp-gen visualize -f ./workflow.yaml -o diagram.md
+
+# Save raw Mermaid source
+arazzo-mcp-gen visualize -d ./my-arazzo-folder -o flow.mmd
+
+# Short alias
+arazzo-mcp-gen viz -d ./my-arazzo-folder
+```
+
+**Diagram shows**
+- Start and end nodes for each workflow
+- Steps with operation targets
+- `onSuccess` / `onFailure` branches labelled with conditions
+- Implicit sequential flow and fallthrough paths (dashed arrows)
+- Cross-workflow `goto` references
+
+> Paste any `.mmd` file into [mermaid.live](https://mermaid.live) for a shareable interactive link.
+
+---
+
+### `mcp-server generate`
+
+The main command. Reads your Arazzo + OpenAPI files, generates a Python MCP server, and builds a Docker image.
+
+```bash
+arazzo-mcp-gen mcp-server generate -d <folder> [flags]
+```
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--folder` | `-d` | **(Required)** Folder containing Arazzo + OpenAPI files | — |
+| `--port` | `-p` | Port the MCP server listens on inside the container and on your host | `5000` |
+| `--output-dir` | | Save generated artifacts (`mcp_server.py`, `Dockerfile`, `arazzo/` folder) to this path for inspection. If omitted a temp directory is used and cleaned up automatically | — |
+
+**Examples**
+
+```bash
+# Minimum required — generates and builds at port 5000
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder
+
+# Custom port
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080
+
+# Inspect generated files after build
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 --output-dir ./artifacts
+```
+
+**Input folder requirements**
+- Exactly one `.yaml`/`.yml` file with a top-level `arazzo:` key
+- All OpenAPI files referenced in `sourceDescriptions[].url` must be in the same folder
+- The Arazzo file must have `info.title`, `info.version`, and at least one workflow
+
+**What it does**
+1. Finds and validates the Arazzo file in the folder
+2. Generates `mcp_server.py` — each workflow becomes a `@mcp.tool()` function with typed parameters
+3. Generates a `Dockerfile` using `python:3.11-slim`
+4. Runs `docker build` to produce a tagged image
+5. Prints the `docker run` command to start the server
+
+**Running the generated server**
+
+```bash
+docker run -p 5000:5000 <image-name>
+```
+
+The MCP endpoint is available at `http://localhost:5000/mcp`.
+
+---
+
+## User Scenario: End-to-End Walkthrough
+
+> **Scenario:** You have an OpenAPI spec for a pet store API and want to expose a "check if a pet exists, then create or update it" workflow as an MCP tool for an AI agent.
+
+### Step 1 — Prepare your project folder
+
+Create a folder containing your Arazzo specification and its referenced OpenAPI files:
+
+1. Create a folder named `pet-project`.
+2. Save your Arazzo file (e.g., `petstore_workflow.yaml`) inside it.
+3. Ensure all OpenAPI `.yaml` files referenced in the Arazzo spec are also in this folder.
+
+```
+pet-project/
+├── petstore_workflow.yaml   ← Your Arazzo spec
+└── petstore_openapi.yaml    ← Your OpenAPI spec
+```
+
+### Step 2 — Validate the spec
+
+```bash
+arazzo-mcp-gen validate -d .
+```
+
+**Expected output (Spectral available):**
+```
+Validating: /path/to/pet-project/petstore_workflow.yaml
+────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Validation Result: PASSED
+  ✓ All arazzo rules passed
+  ─ Validated using Spectral (spectral:arazzo ruleset)
+```
+
+Fix any errors reported before continuing. Warnings are informational; use `--strict` to treat them as errors in CI.
+
+### Step 3 — Inspect the spec
+
+```bash
+arazzo-mcp-gen inspect -d .
+```
+
+Review the printed summary to confirm:
+- The correct source descriptions (your OpenAPI file/URL)
+- Every step has an `operationId` that matches your OpenAPI spec
+- Input schema, success criteria, and routing look correct
+
+### Step 4 — Visualize the flow
+
+```bash
+arazzo-mcp-gen visualize -d .
+```
+
+Your browser opens with an interactive Mermaid flowchart. Check the branching logic visually — this is especially useful for multi-step workflows with `onSuccess` / `onFailure` routing.
+
+To save it:
+
+```bash
+# As a Markdown file (renders on GitHub)
+arazzo-mcp-gen visualize -d . -o flow.md
+```
+
+### Step 5 — Generate the MCP server
+
+Make sure Docker is running, then:
+
+```bash
+arazzo-mcp-gen mcp-server generate -d . -p 5000 --output-dir ./artifacts
+```
+
+**Expected output:**
+```
 Validating input folder...
-Found Arazzo spec: Independent Pet Workflows with 3 workflow(s)
+Found Arazzo spec: Pet Upsert Workflow (V3) with 1 workflow(s)
 Generating MCP server code...
 Building Docker image...
-...
-[+] Building 2.8s (10/10) FINISHED
-...
+[+] Building 12.3s (10/10) FINISHED
 ╔════════════════════════════════════════════════════════════════════════╗
 ║ ✅ MCP Server image built successfully!                                 ║
 ║                                                                        ║
-║ Image:  independent-pet-workflows-mcp-server                           ║
-║ Run:    docker run -p 8080:8080 independent-pet-workflows-mcp-server   ║
-║ URL:    http://localhost:8080                                          ║
+║ Image:  pet-upsert-workflow-v3-mcp-server                              ║
+║ Run:    docker run -p 5000:5000 pet-upsert-workflow-v3-mcp-server      ║
+║ URL:    http://localhost:5000                                           ║
 ║                                                                        ║
-║ Build artifacts saved to: /path/to/your/mcp-artifacts                  ║
+║ Build artifacts saved to: ./artifacts                                  ║
 ╚════════════════════════════════════════════════════════════════════════╝
 ```
 
-### 3. Run the Generated Docker Container
+### Step 6 — Run the server
 
-The CLI automatically tags the image using your Arazzo spec's title. You can boot it immediately using the command provided in the output box:
+Copy the `docker run` command from the output and run it:
 
 ```bash
-docker run -p 8080:8080 independent-pet-workflows-mcp-server
+docker run -p 5000:5000 pet-upsert-workflow-v3-mcp-server
 ```
 
-*(Note: Ensure that the port you mapped (e.g. `8080`) is not currently in use by another application on your host).*
+### Step 7 — Connect an MCP client
 
-### 4. Connect an MCP Client
+The server is now live at `http://localhost:5000/mcp` in stateless HTTP mode. To connect it to an MCP client like **Claude Desktop**, you can use `supergateway` to bridge the HTTP endpoint:
 
-Your MCP server is now running in `stateless_http` mode! Any standard MCP Client (like Claude Desktop) can now connect to `http://localhost:8080/mcp`.
+```json
+{
+  "mcpServers": {
+    "my-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "supergateway",
+        "--streamableHttp",
+        "http://localhost:5000/mcp"
+      ]
+    }
+  }
+}
+```
+
+> **Note:** Replace `http://localhost:5000/mcp` with the endpoint shown in your terminal if you used a different port.
+
+The AI agent can now call your Arazzo workflows as tools. The tool executes the full multi-step logic internally and returns the final result.
 
 ---
 
-## What Gets Generated?
+## Generated Artifacts
 
-If you provided the `--output-dir` flag, you can inspect the artifacts generated by the CLI:
+Inspect with `--output-dir ./artifacts`:
 
-1. **`mcp_server.py`**: The core FastMCP server file. It translates the inputs your Arazzo workflows expect into typed Python function parameters, applies appropriate docstrings, and utilizes `arazzo-runner` for execution.
-2. **`Dockerfile`**: A standard `python:3.11-slim` container template that `EXPOSE`s your specified port, copies the `arazzo/` documents block, and executes `mcp_server.py`.
-3. **`arazzo/` folder**: A structured replica of your source folder that the Docker image mounts to fulfill `$ref` references.
+```
+artifacts/
+├── mcp_server.py     ← FastMCP server; each workflow = @mcp.tool()
+├── Dockerfile        ← python:3.11-slim image; EXPOSEs your port
+└── arazzo/
+    ├── petstore_workflow.yaml   ← copy of your Arazzo spec
+    └── openapi.yaml             ← copy of referenced OpenAPI spec(s)
+```
+
+| File | What it is |
+|------|------------|
+| `mcp_server.py` | Python server using `fastmcp` and `arazzo-runner`. Workflow inputs become typed function parameters; docstrings come from workflow summaries/descriptions. |
+| `Dockerfile` | Standard slim Python container. Installs dependencies, copies the `arazzo/` folder, and runs `mcp_server.py`. |
+| `arazzo/` | All spec files the container needs to resolve `$ref` and `sourceDescriptions` at runtime. |
+
+---
 
 ## License
+
 Copyright (c) 2026, WSO2 LLC. (https://www.wso2.com).

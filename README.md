@@ -11,7 +11,7 @@
 3. [Installation](#installation)
 4. [Quick Start](#quick-start)
 5. [Commands](#commands)
-   - [init](#init)
+   - [sample](#sample)
    - [validate](#validate)
    - [inspect](#inspect)
    - [visualize](#visualize)
@@ -79,7 +79,7 @@ arazzo-mcp-gen --version
 If you don't have an Arazzo spec yet, let the CLI create a sample one:
 
 ```bash
-arazzo-mcp-gen init my-project
+arazzo-mcp-gen sample my-project
 cd my-project
 ```
 
@@ -101,12 +101,12 @@ docker run -p 5000:5000 <image-name-from-output>
 
 ## Commands
 
-### `init`
+### `sample`
 
 Creates a new directory with a ready-to-use sample Arazzo spec targeting the Petstore v3 API. Good starting point for writing your own spec.
 
 ```bash
-arazzo-mcp-gen init [project-name]
+arazzo-mcp-gen sample [project-name]
 ```
 
 | Argument | Description | Default |
@@ -117,10 +117,10 @@ arazzo-mcp-gen init [project-name]
 
 ```bash
 # Create a folder called 'sample-arazzo-project'
-arazzo-mcp-gen init
+arazzo-mcp-gen sample
 
 # Create a folder called 'my-api-project'
-arazzo-mcp-gen init my-api-project
+arazzo-mcp-gen sample my-api-project
 ```
 
 What it creates:

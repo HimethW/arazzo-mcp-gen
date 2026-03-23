@@ -104,9 +104,9 @@ workflows:
             type: end
 `
 
-var initCmd = &cobra.Command{
-	Use:   "init [project-name]",
-	Short: "Initialize a new Arazzo MCP project",
+var sampleCmd = &cobra.Command{
+	Use:   "sample [project-name]",
+	Short: "Generate a sample Arazzo project",
 	Long:  "Creates a new directory with a sample Arazzo workflow file configured for the Petstore v3 API.",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -128,12 +128,12 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("failed to write sample arazzo file: %w", err)
 		}
 
-		fmt.Printf("Successfully initialized project in '%s'\n", folderName)
+		fmt.Printf("Successfully created sample project in '%s'\n", folderName)
 		fmt.Printf("Sample Arazzo file created at: %s\n", filePath)
 		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(sampleCmd)
 }

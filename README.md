@@ -278,30 +278,39 @@ The main command. Reads your Arazzo + OpenAPI files, generates a Python MCP serv
 
 ```bash
 arazzo-mcp-gen mcp-server generate -d <folder> [flags]
+arazzo-mcp-gen mcp-server generate -f <arazzo-file> [flags]
 ```
 
 | Flag | Short | Description | Default |
 |------|-------|-------------|---------|
-| `--folder` | `-d` | **(Required)** Folder containing Arazzo + OpenAPI files | — |
+| `--folder` | `-d` | Folder containing Arazzo + OpenAPI files (auto-detects the Arazzo file) | — |
+| `--file` | `-f` | Path to a single Arazzo specification file (uses its parent directory for OpenAPI files) | — |
 | `--port` | `-p` | Port the MCP server listens on inside the container and on your host | `5000` |
 | `--output` | `-o` | Save generated artifacts (`mcp_server.py`, `Dockerfile`, `arazzo/` folder) to this path for inspection. If omitted a temp directory is used and cleaned up automatically | — |
+
+> **Note:** One of `--folder` (`-d`) or `--file` (`-f`) is required, but not both.
+> Use `--file` when a folder contains multiple Arazzo files and you want to convert only one.
 
 **Examples**
 
 ```bash
-# Minimum required — generates and builds at port 5000
+# From a folder (auto-detects the Arazzo file)
 arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder
+
+# From a single Arazzo file directly
+arazzo-mcp-gen mcp-server generate -f ./my-arazzo-folder/workflow.arazzo.yaml
 
 # Custom port
 arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080
 
 # Inspect generated files after build
-arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 -o ./artifacts
+arazzo-mcp-gen mcp-server generate -f ./workflow.arazzo.yaml -p 8080 -o ./artifacts
 ```
 
-**Input folder requirements**
-- Exactly one `.yaml`/`.yml` file with a top-level `arazzo:` key
-- All OpenAPI files referenced in `sourceDescriptions[].url` must be in the same folder
+**Input requirements**
+- When using `-d`: the folder must contain exactly one `.yaml`/`.yml` file with a top-level `arazzo:` key
+- When using `-f`: point directly to the Arazzo file; the folder can contain multiple Arazzo files
+- All OpenAPI files referenced in `sourceDescriptions[].url` must be in the same folder as the Arazzo file
 - The Arazzo file must have `info.title`, `info.version`, and at least one workflow
 
 **What it does**

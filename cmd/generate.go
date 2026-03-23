@@ -16,12 +16,12 @@ arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder
 arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080
 
 # Generate and save build artifacts to a directory for inspection or manual editing
-arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder --output-dir ./my-output`
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -o ./my-output`
 
 var (
-	generateFolder    string
-	generatePort      int
-	generateOutputDir string
+	generateFolder string
+	generatePort   int
+	generateOutput string
 )
 
 var generateCmd = &cobra.Command{
@@ -44,7 +44,7 @@ Flags:
                              OpenAPI spec files
   -p, --port int            Port the MCP server will listen on inside the
                              container and mapped to localhost (default: 5000)
-      --output-dir string   Directory to save generated build artifacts
+  -o, --output string       Directory to save generated build artifacts
                              (Dockerfile, mcp_server.py, arazzo specs). Files
                              persist after the build for inspection or manual
                              editing. If not set, a temporary directory is used
@@ -61,7 +61,7 @@ Flags:
 func init() {
 	generateCmd.Flags().StringVarP(&generateFolder, "folder", "d", "", "Path to folder containing Arazzo and OpenAPI spec files (required)")
 	generateCmd.Flags().IntVarP(&generatePort, "port", "p", 5000, "Port the MCP server will listen on")
-	generateCmd.Flags().StringVar(&generateOutputDir, "output-dir", "", "Output directory to save generated files (Dockerfile, server code, specs)")
+	generateCmd.Flags().StringVarP(&generateOutput, "output", "o", "", "Output directory to save generated files (Dockerfile, server code, specs)")
 
 	generateCmd.MarkFlagRequired("folder")
 
@@ -120,7 +120,7 @@ func runGenerateCommand() error {
 		ArazzoFileName: arazzoFileName,
 		ServerCode:     serverCode,
 		DockerfileCode: dockerfileCode,
-		OutputDir:      generateOutputDir,
+		OutputDir:      generateOutput,
 	}
 
 	if err := generator.BuildMCPServerImage(config); err != nil {

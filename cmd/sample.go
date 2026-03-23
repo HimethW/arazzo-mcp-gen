@@ -104,6 +104,8 @@ workflows:
             type: end
 `
 
+var sampleOutput string
+
 var sampleCmd = &cobra.Command{
 	Use:   "sample [project-name]",
 	Short: "Generate a sample Arazzo project",
@@ -111,7 +113,9 @@ var sampleCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		folderName := "sample-arazzo-project"
-		if len(args) > 0 {
+		if sampleOutput != "" {
+			folderName = sampleOutput
+		} else if len(args) > 0 {
 			folderName = args[0]
 		}
 
@@ -135,5 +139,6 @@ var sampleCmd = &cobra.Command{
 }
 
 func init() {
+	sampleCmd.Flags().StringVarP(&sampleOutput, "output", "o", "", "Output directory name to create the sample project in")
 	rootCmd.AddCommand(sampleCmd)
 }

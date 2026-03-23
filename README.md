@@ -284,7 +284,7 @@ arazzo-mcp-gen mcp-server generate -d <folder> [flags]
 |------|-------|-------------|---------|
 | `--folder` | `-d` | **(Required)** Folder containing Arazzo + OpenAPI files | — |
 | `--port` | `-p` | Port the MCP server listens on inside the container and on your host | `5000` |
-| `--output-dir` | | Save generated artifacts (`mcp_server.py`, `Dockerfile`, `arazzo/` folder) to this path for inspection. If omitted a temp directory is used and cleaned up automatically | — |
+| `--output` | `-o` | Save generated artifacts (`mcp_server.py`, `Dockerfile`, `arazzo/` folder) to this path for inspection. If omitted a temp directory is used and cleaned up automatically | — |
 
 **Examples**
 
@@ -296,7 +296,7 @@ arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder
 arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080
 
 # Inspect generated files after build
-arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 --output-dir ./artifacts
+arazzo-mcp-gen mcp-server generate -d ./my-arazzo-folder -p 8080 -o ./artifacts
 ```
 
 **Input folder requirements**
@@ -388,7 +388,7 @@ arazzo-mcp-gen visualize -d . -o flow.md
 Make sure Docker is running, then:
 
 ```bash
-arazzo-mcp-gen mcp-server generate -d . -p 5000 --output-dir ./artifacts
+arazzo-mcp-gen mcp-server generate -d . -p 5000 -o ./artifacts
 ```
 
 **Expected output:**
@@ -445,7 +445,7 @@ The AI agent can now call your Arazzo workflows as tools. The tool executes the 
 
 ## Generated Artifacts
 
-Inspect with `--output-dir ./artifacts`:
+Inspect with `--output` / `-o ./artifacts`:
 
 ```
 artifacts/

@@ -190,7 +190,7 @@ func (p *printer) printWorkflow(idx, total int, wf map[string]interface{}) {
 	if inputs != nil {
 		props := obj(inputs, "properties")
 		if len(props) > 0 {
-			fmt.Println(bold("  🔡 INPUTS"))
+			fmt.Println(bold("  📌 INPUTS"))
 			keys := sortedKeys(props)
 			for _, name := range keys {
 				propType := ""
@@ -225,12 +225,12 @@ func (p *printer) printWorkflow(idx, total int, wf map[string]interface{}) {
 	// Outputs
 	outputs := obj(wf, "outputs")
 	if len(outputs) > 0 {
-		fmt.Println(bold("  📤 WORKFLOW OUTPUTS"))
+		fmt.Println(bold("  📌 WORKFLOW OUTPUTS"))
 		keys := sortedKeys(outputs)
 		for _, name := range keys {
 			expr := fmt.Sprintf("%v", outputs[name])
 			fmt.Printf("    %s %-20s %s %s\n",
-				mag("◆"), bold(name), gray("←"), dim(expr))
+				green("•"), bold(name), gray("←"), dim(expr))
 		}
 		fmt.Println()
 	}

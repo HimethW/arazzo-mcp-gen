@@ -74,7 +74,7 @@ arazzo-mcp-gen --version
 
 ---
 
-## Quick Start
+<!-- ## Quick Start
 
 If you don't have an Arazzo spec yet, let the CLI create a sample one:
 
@@ -97,7 +97,7 @@ Once Docker finishes building, run it:
 docker run -p 5000:5000 <image-name-from-output>
 ```
 
----
+--- -->
 
 ## Commands
 

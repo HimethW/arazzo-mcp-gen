@@ -6,7 +6,9 @@ before:
 
 builds:
   - id: arazzo-mcp-gen #unique name for the tool
-    binary: arazzo-mcp-gen #the name of the binary to be generated on the hard drive
+    binary: >-
+      arazzo-mcp-gen
+      {{- if ne .Os "windows" }}-{{ .Os }}-{{ .Arch }}{{ end }}
     main: . #look in the root dir to get the main.go to start the compilation
     env:
       - CGO_ENABLED=0 #env variables to be set
@@ -53,7 +55,7 @@ brews: #creating the brew formula
     homepage: https://github.com/HimethW/arazzo-mcp-gen
     description: "A CLI tool to generate MCP servers from Arazzo specifications."
     install: |
-      bin.install "arazzo-mcp-gen"
+      bin.install Dir["arazzo-mcp-gen*"].first => "arazzo-mcp-gen"
     test: |
       system "#{bin}/arazzo-mcp-gen", "--version"
 

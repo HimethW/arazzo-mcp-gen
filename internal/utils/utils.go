@@ -28,7 +28,8 @@ func EnsureDir(dir string) error {
 
 // CopyDir recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist, destination directory must not exist.
-func CopyDir(src string, dst string) error {
+// Any absolute paths in excludePaths will be skipped during the copy.
+func CopyDir(src string, dst string, excludePaths ...string) error {
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -46,8 +47,20 @@ func CopyDir(src string, dst string) error {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
+		// Skip excluded paths to prevent infinite recursion when dst is inside src
+		skip := false
+		for _, excl := range excludePaths {
+			if srcPath == excl {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+
 		if entry.IsDir() {
-			if err = CopyDir(srcPath, dstPath); err != nil {
+			if err = CopyDir(srcPath, dstPath, excludePaths...); err != nil {
 				return err
 			}
 		} else {

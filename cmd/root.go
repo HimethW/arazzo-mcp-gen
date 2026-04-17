@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/wso2/arazzo-mcp-gen/internal/metadata"
+	"github.com/wso2/arazzo-mcp-generator/internal/metadata"
 )
 
 var rootCmd = &cobra.Command{

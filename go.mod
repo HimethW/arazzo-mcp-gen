@@ -1,4 +1,4 @@
-module github.com/wso2/arazzo-mcp-gen
+module github.com/wso2/arazzo-mcp-generator
 
 go 1.25.0
 

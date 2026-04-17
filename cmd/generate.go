@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/wso2/arazzo-mcp-gen/internal/generator"
+	"github.com/wso2/arazzo-mcp-generator/internal/generator"
 )
 
 const GenerateCmdExample = `# Generate an MCP server Docker image from an Arazzo spec folder

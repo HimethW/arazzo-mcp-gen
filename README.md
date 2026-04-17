@@ -51,20 +51,44 @@ Given a folder containing:
 
 ## Installation
 
-Download the latest version for your operating system from the [Releases](https://github.com/HimethW/arazzo-mcp-gen/releases) page.
-
-### Windows
-1. Download `arazzo-mcp-gen-windows-amd64.exe`.
-2. Rename it to `arazzo-mcp-gen.exe`.
-3. Move it to a folder in your PATH (e.g., `C:\Windows\system32`) or run it directly from your downloads.
+Download the latest version for your operating system from the [Releases](https://github.com/wso2/arazzo-mcp-generator/releases) page, or use the quick install commands below.
 
 ### macOS / Linux
-1. Download the binary for your architecture (`darwin` for Mac, `linux` for Linux).
-2. Make it executable:
-   ```bash
-   chmod +x arazzo-mcp-gen-linux-amd64
-   sudo mv arazzo-mcp-gen-linux-amd64 /usr/local/bin/arazzo-mcp-gen
-   ```
+
+```bash
+# For macOS (Apple Silicon)
+curl -L https://github.com/wso2/arazzo-mcp-generator/releases/latest/download/arazzo-mcp-gen_Darwin_arm64.tar.gz -o arazzo-mcp-gen.tar.gz
+tar -xzf arazzo-mcp-gen.tar.gz
+sudo mv arazzo-mcp-gen-darwin-arm64 /usr/local/bin/arazzo-mcp-gen
+rm arazzo-mcp-gen.tar.gz
+
+# For macOS (Intel)
+curl -L https://github.com/wso2/arazzo-mcp-generator/releases/latest/download/arazzo-mcp-gen_Darwin_x86_64.tar.gz -o arazzo-mcp-gen.tar.gz
+tar -xzf arazzo-mcp-gen.tar.gz
+sudo mv arazzo-mcp-gen-darwin-amd64 /usr/local/bin/arazzo-mcp-gen
+rm arazzo-mcp-gen.tar.gz
+
+# For Linux (x86_64)
+curl -L https://github.com/wso2/arazzo-mcp-generator/releases/latest/download/arazzo-mcp-gen_Linux_x86_64.tar.gz -o arazzo-mcp-gen.tar.gz
+tar -xzf arazzo-mcp-gen.tar.gz
+sudo mv arazzo-mcp-gen-linux-amd64 /usr/local/bin/arazzo-mcp-gen
+rm arazzo-mcp-gen.tar.gz
+
+# For Linux (ARM64)
+curl -L https://github.com/wso2/arazzo-mcp-generator/releases/latest/download/arazzo-mcp-gen_Linux_arm64.tar.gz -o arazzo-mcp-gen.tar.gz
+tar -xzf arazzo-mcp-gen.tar.gz
+sudo mv arazzo-mcp-gen-linux-arm64 /usr/local/bin/arazzo-mcp-gen
+rm arazzo-mcp-gen.tar.gz
+```
+
+### Windows
+
+```powershell
+# Download and extract (PowerShell)
+Invoke-WebRequest -Uri https://github.com/wso2/arazzo-mcp-generator/releases/latest/download/arazzo-mcp-gen_Windows_x86_64.zip -OutFile arazzo-mcp-gen.zip
+Expand-Archive -Path arazzo-mcp-gen.zip -DestinationPath .
+# Move arazzo-mcp-gen.exe to a directory in your PATH, or run it directly
+```
 
 Verify the installation:
 

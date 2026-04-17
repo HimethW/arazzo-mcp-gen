@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wso2/arazzo-mcp-gen/internal/generator"
-	"github.com/wso2/arazzo-mcp-gen/internal/validator"
+	"github.com/wso2/arazzo-mcp-generator/internal/generator"
+	"github.com/wso2/arazzo-mcp-generator/internal/validator"
 )
 
 const ValidateCmdExample = `# Validate an Arazzo spec folder (auto-detects the Arazzo file)

@@ -26,7 +26,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/wso2/arazzo-mcp-gen/internal/utils"
+	"github.com/wso2/arazzo-mcp-generator/internal/utils"
 )
 
 // MCPServerBuildConfig holds all parameters needed to build the MCP server Docker image.

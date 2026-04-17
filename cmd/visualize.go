@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/wso2/arazzo-mcp-gen/internal/generator"
-	"github.com/wso2/arazzo-mcp-gen/internal/visualizer"
+	"github.com/wso2/arazzo-mcp-generator/internal/generator"
+	"github.com/wso2/arazzo-mcp-generator/internal/visualizer"
 )
 
 const VisualizeCmdExample = `# Visualize an Arazzo spec folder (auto-detects the Arazzo file)
